@@ -12,6 +12,7 @@ Small dependency-free TypeScript utilities for medical drone logistics, from
 | [`contingency.ts`](contingency.ts) | Point of no return, in-flight continue / divert / land-now decisions, and routing through charging or battery-swap stations when a clinic is out of range |
 | [`solar.ts`](solar.ts) | Size solar charging stations: daily charge energy, flights per day, charge time, panel power, storage and spare batteries for swap stations |
 | [`station-panel.qml`](station-panel.qml) | Qt 6 / QML touchscreen panel for an embedded swap station: solar input, battery bays, next arrival |
+| [`sail_track.py`](sail_track.py) | Python (standard library only) sailing race analyser for GPX / CSV tracks: speed, VMG, tack and gybe losses, polar diagram, leg efficiency, per-second CSV for training data |
 
 ```ts
 import { distanceM, bearingDeg } from "./geo"
@@ -37,6 +38,10 @@ planViaStations(quelimane, gurue, [mocuba], aircraft, { chargeW: 1000 })
 // → { stops: [mocuba], minutes: ~185, stopMinutes: 3 }
 
 panelWNeeded(6, 1300, 5) // → 2312 W of panels for 6 recharges a day at 5 peak sun hours
+```
+
+```sh
+python sail_track.py race.gpx --wind 20 --mark=-17.89,36.95 --mark=-17.90,36.95 --svg polar.svg --csv samples.csv
 ```
 
 Estimates are planning aids, not flight-safety tools. MIT licensed.
