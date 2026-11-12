@@ -42,3 +42,10 @@ export function storageWhNeeded(
 ) {
   return Math.ceil((nightFlights * whPerFlight * autonomyDays) / (chargerEfficiency * depthOfDischarge))
 }
+
+/**
+ * Spare batteries a swap station needs so a charged pack is always ready:
+ * packs on charge at peak demand, plus one in the drone and one spare.
+ */
+export const sparePacksNeeded = (swapsPerHour: number, chargeMinutesPerPack: number) =>
+  Math.ceil((swapsPerHour * chargeMinutesPerPack) / 60) + 2

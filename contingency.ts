@@ -4,7 +4,12 @@
 import { type LatLng, bearingDeg, distanceM } from "./geo"
 import { type Aircraft, type Wind, estimateLeg, groundSpeedMps } from "./flight-estimate"
 
-export type Site = { id: string; pos: LatLng; charging?: boolean }
+export type Site = {
+  id: string
+  pos: LatLng
+  charging?: boolean
+  swapMinutes?: number // set if the station swaps batteries autonomously
+}
 
 const reserveWh = (a: Aircraft) => a.batteryWh * ((a.reservePct ?? 25) / 100)
 const hoverWh = (a: Aircraft, seconds: number) => (seconds * (a.hoverPowerW ?? a.cruisePowerW)) / 3600
@@ -62,7 +67,7 @@ export type Decision =
 
 /**
  * In-flight call: continue if the destination is reachable with the reserve
- * intact, otherwise divert to the nearest reachable site (charging stations
+ * intact, otherwise divert to the nearest reachable site (charging / swap stations
  * preferred), otherwise land immediately.
  */
 export function decide(
@@ -76,15 +81,16 @@ export function decide(
   const leftWh = remainingWh - airborneLegWh(pos, destination, a, wind)
   if (leftWh >= reserveWh(a)) return { action: "continue", leftWh }
   const options = reachableSites(pos, remainingWh, sites, a, wind)
-  const to = options.find((r) => r.site.charging) ?? options[0]
+  const to = options.find((r) => r.site.charging || r.site.swapMinutes != null) ?? options[0]
   return to ? { action: "divert", to } : { action: "land-now" }
 }
 
-export type StationPlan = { stops: Site[]; minutes: number; flightMinutes: number; chargeMinutes: number }
+export type StationPlan = { stops: Site[]; minutes: number; flightMinutes: number; stopMinutes: number }
 
 /**
  * Fastest route from `from` to `to` hopping through charging stations, assuming a
- * full battery at takeoff and a recharge of whatever was used at each stop.
+ * full battery at takeoff. At each stop the battery is swapped (`swapMinutes`) or
+ * recharged with whatever was used at `chargeW`.
  * Every leg must keep the reserve. Returns null if no chain of stations works.
  */
 export function planViaStations(
@@ -94,11 +100,11 @@ export function planViaStations(
   a: Aircraft,
   opts: { wind?: Wind; chargeW?: number } = {},
 ): StationPlan | null {
-  const nodes = [from, ...stations.filter((s) => s.charging !== false), to]
+  const nodes = [from, ...stations.filter((s) => s.charging !== false || s.swapMinutes != null), to]
   const best = nodes.map(() => Infinity)
   const prev = nodes.map(() => -1)
   const flight = nodes.map(() => 0)
-  const charge = nodes.map(() => 0)
+  const stop = nodes.map(() => 0)
   const done = nodes.map(() => false)
   best[0] = 0
 
@@ -111,13 +117,16 @@ export function planViaStations(
       if (done[j] || j === i) continue
       const leg = estimateLeg(distanceM(nodes[i].pos, nodes[j].pos), bearingDeg(nodes[i].pos, nodes[j].pos), a, opts.wind)
       if (!leg.feasible) continue
-      const chargeMin = j === nodes.length - 1 || !opts.chargeW ? 0 : (leg.energyWh / opts.chargeW) * 60
-      const cost = best[i] + leg.minutes + chargeMin
+      const stopMin =
+        j === nodes.length - 1
+          ? 0
+          : (nodes[j].swapMinutes ?? (opts.chargeW ? (leg.energyWh / opts.chargeW) * 60 : 0))
+      const cost = best[i] + leg.minutes + stopMin
       if (cost < best[j]) {
         best[j] = cost
         prev[j] = i
         flight[j] = flight[i] + leg.minutes
-        charge[j] = charge[i] + chargeMin
+        stop[j] = stop[i] + stopMin
       }
     }
   }
@@ -126,5 +135,5 @@ export function planViaStations(
   if (best[end] === Infinity) return null
   const stops: Site[] = []
   for (let k = prev[end]; k > 0; k = prev[k]) stops.unshift(nodes[k])
-  return { stops, minutes: best[end], flightMinutes: flight[end], chargeMinutes: charge[end] }
+  return { stops, minutes: best[end], flightMinutes: flight[end], stopMinutes: stop[end] }
 }
