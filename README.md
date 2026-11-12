@@ -1,6 +1,8 @@
 # gondohealth-utils
 
-Small dependency-free TypeScript utilities for medical drone logistics, from
+**English** | [Português](README.pt.md)
+
+Small dependency-free utilities for medical drone logistics, from
 [**Gondohealth**](https://github.com/Gondohealth-org).
 
 | file | what it is |
