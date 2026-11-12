@@ -11,6 +11,7 @@ Small dependency-free TypeScript utilities for medical drone logistics, from
 | [`qgc-plan.ts`](qgc-plan.ts) | Build a QGroundControl `.plan` mission (VTOL takeoff → waypoints → land) for PX4 / ArduPilot |
 | [`contingency.ts`](contingency.ts) | Point of no return, in-flight continue / divert / land-now decisions, and routing through charging or battery-swap stations when a clinic is out of range |
 | [`solar.ts`](solar.ts) | Size solar charging stations: daily charge energy, flights per day, charge time, panel power, storage and spare batteries for swap stations |
+| [`station-panel.qml`](station-panel.qml) | Qt 6 / QML touchscreen panel for an embedded swap station: solar input, battery bays, next arrival |
 
 ```ts
 import { distanceM, bearingDeg } from "./geo"
