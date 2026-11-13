@@ -47,4 +47,7 @@ g++ -std=c++17 -O2 -o sail_track sail_track.cpp
 ./sail_track race.gpx --wind 20 --mark -17.89,36.95 --mark -17.90,36.95 --svg polar.svg --csv samples.csv
 ```
 
+Architecture decisions live in [docs/adr](docs/adr) — starting with
+[why relay stations swap batteries rather than aircraft](docs/adr/0001-battery-swap-at-relay-stations.md).
+
 Estimates are planning aids, not flight-safety tools. MIT licensed.
